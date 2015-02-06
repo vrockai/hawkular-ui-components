@@ -10,11 +10,9 @@ pids
 # Users Environment Variables
 .lock-wscript
 
-.tmp/
-.bower/
 libs/
 node_modules/
-bower_components/
+keycloak.json
 
 ._*
 .DS_Store
@@ -24,3 +22,5 @@ bower_components/
 *.ipr
 *.iws
 *.iml
+
+dist/
