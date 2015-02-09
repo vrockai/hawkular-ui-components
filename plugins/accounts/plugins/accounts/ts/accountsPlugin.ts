@@ -14,6 +14,7 @@ module HawkularAccounts {
             .build();
         builder.configureRouting($routeProvider, accountsTab);
 
+        $routeProvider.when('/accounts/organizations/new', {templateUrl: builder.join(HawkularAccounts.templatePath, 'organization_new.html')});
         $locationProvider.html5Mode(true);
     }]);
 
