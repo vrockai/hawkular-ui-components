@@ -10,6 +10,7 @@ declare module HawkularAccounts {
         static $inject: string[];
         constructor($rootScope: ng.IRootScopeService, $window: ng.IWindowService);
         private keycloak();
+        onReady(callback: any): any;
         realm(realm?: string): string;
         logout(): void;
         updateToken(periodicity: number): any;

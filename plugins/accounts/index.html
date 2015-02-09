@@ -42,6 +42,7 @@
     <script src="libs/hawtio-utilities/dist/angular-file-upload.js"></script>
     <script src="libs/hawtio-utilities/dist/hawtio-utilities.js"></script>
     <script src="libs/keycloak/dist/keycloak.js"></script>
+    <script src="libs/angular-resource/angular-resource.js"></script>
     <!-- endbower -->
 
     <script src="libs/bootstrap/dist/js/bootstrap.js"></script>
@@ -63,14 +64,20 @@
     <script src="dist/hawkular-accounts.js"></script>
 
     <script type="text/javascript">
-        angular.element(document).ready(function ($http) {
-            var keycloakAuth = new Keycloak("/keycloak.json");
+        angular.element(document).ready(function () {
+            window.keycloakReady = false;
+            window.keycloak = Keycloak("/keycloak.json");
 
-            keycloakAuth.onAuthLogout = function() {
+            window.keycloak.onAuthLogout = function() {
                 location.reload();
             };
 
-            keycloakAuth.init({ onLoad: 'login-required' }).error(function () {
+            window.keycloak.onReady = function(authenticated) {
+                console.log("Keycloak is ready. Is the user authenticated? " + authenticated);
+                window.keycloakReady = true;
+            };
+
+            window.keycloak.init({ onLoad: 'login-required' }).error(function () {
                 alert("Couldn't log you in. Sorry.");
                 window.location.reload();
             });

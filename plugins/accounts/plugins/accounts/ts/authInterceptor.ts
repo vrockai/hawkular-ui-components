@@ -25,26 +25,25 @@ module HawkularAccounts {
             }
             addBearer = () => {
                 return this.Auth.updateToken(5).success(() => {
-                    var token = this.Auth.token();
-                    console.debug('Adding bearer token to the request: ' + token);
-                    request.headers.Authorization = 'Bearer ' + token;
-                    request.headers['X-RHQ-Realm'] = this.Auth.realm();
-                    deferred.notify();
-                    return deferred.resolve(request);
-                });
+                        var token = this.Auth.token();
+                        console.debug('Adding bearer token to the request: ' + token);
+                        request.headers.Authorization = 'Bearer ' + token;
+                        request.headers['X-RHQ-Realm'] = this.Auth.realm();
+                        deferred.notify();
+                        return deferred.resolve(request);
+                    }).error(() => {
+                        console.log("Couldn't update token");
+                    });
             };
             deferred = this.$q.defer();
-            if (this.Auth.isAuthenticated()) {
-                console.log('User is authenticated, add bearer token');
-                addBearer();
-            }
+            this.Auth.onReady(addBearer);
             return this.$q.when(deferred.promise);
         };
 
         responseError = (rejection) => {
             console.debug('Intercepting error response');
             if (rejection.status === 401) {
-                toastr.error('Your session has expired. Please, login again.');
+                // TODO: notify the user that the session is expired
                 this.Auth.logout();
             }
             return this.$q.reject(rejection);

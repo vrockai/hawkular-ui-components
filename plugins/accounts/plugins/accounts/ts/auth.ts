@@ -15,11 +15,24 @@ module HawkularAccounts {
                     keycloak.logout();
                 }
                 $rootScope['username'] = keycloak.idToken.name;
+            } else {
+                console.log("keycloak is not loaded");
             }
         }
 
         private keycloak():any {
             return this.$window['keycloak'];
+        }
+
+        onReady(callback):any {
+            if (this.$window['keycloakReady']) {
+                callback();
+            } else {
+                this.keycloak().onReady = () => {
+                    this.$window['keycloakReady'] = true;
+                    callback();
+                }
+            }
         }
 
         realm(realm?:string):string {
