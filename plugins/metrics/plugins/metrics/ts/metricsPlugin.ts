@@ -81,7 +81,8 @@ module HawkularMetrics {
         when('/metrics/responseTime/:resourceId/', {templateUrl: 'plugins/metrics/html/response-time.html'}).
         when('/metrics/responseTime/:resourceId/:rangeStart', {templateUrl: 'plugins/metrics/html/response-time.html'}).
         when('/metrics/responseTime/:resourceId/:rangeStart/:rangeEnd', {templateUrl: 'plugins/metrics/html/response-time.html'}).
-        when('/metrics/availability/:resourceId', {templateUrl: 'plugins/metrics/html/response-time.html'});
+        when('/metrics/availability/:resourceId', {templateUrl: 'plugins/metrics/html/response-time.html'}).
+        when('/metrics/alerts/:resourceId', {templateUrl: 'plugins/metrics/html/alerts.html'});
   }]);
 
   hawtioPluginLoader.addModule(HawkularMetrics.pluginName);

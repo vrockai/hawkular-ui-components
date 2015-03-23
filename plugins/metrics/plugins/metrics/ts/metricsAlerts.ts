@@ -23,15 +23,30 @@ module HawkularMetrics {
   }
 
   export class MetricsAlertController implements IMetricsAlertController {
-    public static  $inject = ['$scope', 'HawkularAlert', '$log', '$q'];
+    public static  $inject = ['$scope', 'HawkularAlert', 'HawkularAlertsManager', '$log', '$q', '$rootScope', '$routeParams'];
+
+    private metricId: string;
 
     constructor(private $scope:any,
                 private HawkularAlert:any,
+                private HawkularAlertsManager: HawkularMetrics.IHawkularAlertsManager,
                 private $log: ng.ILogService,
                 private $q: ng.IQService,
+                private $rootScope: any,
+                private $routeParams: any,
                 private alertList: any) {
 
       this.$log.debug('querying data');
+      this.$log.debug('$routeParams',$routeParams.resourceId);
+
+      var a: any = HawkularAlertsManager.getTrigger($routeParams.resourceId + '_trigger_tresh');
+      var b: any = HawkularAlertsManager.getTrigger($routeParams.resourceId + '_trigger_avail');
+
+      this.$log.debug('a', a);
+      this.$log.debug('b', b);
+
+      this.metricId = $routeParams.resourceId;
+
       this.alertList = [];
 
       this.HawkularAlert.Alert.query().$promise.then((data) => {
