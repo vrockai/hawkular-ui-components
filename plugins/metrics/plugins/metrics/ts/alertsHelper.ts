@@ -18,9 +18,11 @@
 module HawkularMetrics {
 
   export interface IHawkularAlertsManager {
-    createTrigger(triggerName: string, enabled: boolean, conditionType: string): ng.IPromise<void>
+    createAction(email: string): ng.IPromise<void>
+    createTrigger(triggerName: string, enabled: boolean, conditionType: string, email: string): ng.IPromise<void>
     createCondition(triggerId: string, condition: any): ng.IPromise<void>
     createDampening(triggerId: string, duration: number): ng.IPromise<void>
+    getAction(email: string): ng.IPromise<void>
     getActions(triggerId: string): ng.IPromise<void>
     getTrigger(triggerId: string): ng.IPromise<void>
     setEmail(triggerId: string, email: string): ng.IPromise<void>
@@ -35,17 +37,19 @@ module HawkularMetrics {
     constructor(private HawkularAlert:any) {
     }
 
-    public createTrigger(triggerName: string, enabled: boolean, conditionType: string): ng.IPromise<void> {
+    public createTrigger(triggerName: string, enabled: boolean, conditionType: string, email: string): ng.IPromise<void> {
       // Create a trigger
       var triggerId: string;
 
       return this.HawkularAlert.Trigger.save({
         name: triggerName,
+        id: triggerName,
         description: 'Created on ' + Date(),
         firingMatch: 'ALL',
         safetyMatch: 'ALL',
         enabled: enabled,
-        safetyEnabled: false
+        safetyEnabled: false,
+        actions: [email]
       }).$promise.then((trigger)=> {
 
           triggerId = trigger.id;
@@ -60,7 +64,7 @@ module HawkularMetrics {
             return this.createCondition(triggerId,{
               type: conditionType,
               triggerId: triggerId,
-              threshold: 500,
+              threshold: 1000,
               dataId: dataId,
               operator: 'GT'
             });
@@ -69,7 +73,7 @@ module HawkularMetrics {
               type: conditionType,
               triggerId: triggerId,
               dataId: dataId,
-              operator: 'NOT_UP'
+              operator: 'DOWN'
             });
           }
         }).then((condition) => {
@@ -80,6 +84,21 @@ module HawkularMetrics {
             return this.createDampening(triggerId, 7000);
           }
         });
+    }
+
+    getAction(email: string): ng.IPromise<void> {
+      return this.HawkularAlert.Action.get({
+        actionId: email
+      }).$promise;
+    }
+
+    createAction(email: string): ng.IPromise<void> {
+      return this.HawkularAlert.Action.save({
+        actionPlugin: 'email',
+        actionId: email,
+        description: 'Created on ' + Date(),
+        to: email
+      }).$promise;
     }
 
     createCondition(triggerId: string, condition: any): ng.IPromise<void> {

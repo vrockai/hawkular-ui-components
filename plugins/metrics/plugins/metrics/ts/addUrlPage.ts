@@ -87,13 +87,25 @@ module HawkularMetrics {
             });
 
         }).then(()=> {
+          // Find if a default email exists
+          return this.HawkularAlertsManager.getAction('myemail@company.com');
+        }).then((data)=> {
+          // Create a default email action
+          this.$log.debug('Default action', data);
+          if (!data) {
+            this.$log.debug('Default action does not exist, creating one');
+            return this.HawkularAlertsManager.createAction('myemail@company.com');
+          } else {
+            this.$log.debug('Default does already exist');
+          }
+        }).then(()=> {
           // Create threshold trigger for newly created metrics
           console.log('metric', globalMetricId);
-          return this.HawkularAlertsManager.createTrigger(globalMetricId + '_trigger_thres', true, 'THRESHOLD');
+          return this.HawkularAlertsManager.createTrigger(globalMetricId + '_trigger_thres', true, 'THRESHOLD', 'myemail@company.com');
         }).then((alert)=> {
           console.log('alert', alert);
           // Create availability trigger for newly created metrics
-          return this.HawkularAlertsManager.createTrigger(globalMetricId + '_trigger_avail', false, 'AVAILABILITY');
+          return this.HawkularAlertsManager.createTrigger(globalMetricId + '_trigger_avail', false, 'AVAILABILITY', 'myemail@company.com');
         });
     }
 

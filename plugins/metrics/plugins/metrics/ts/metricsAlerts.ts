@@ -39,17 +39,11 @@ module HawkularMetrics {
       this.$log.debug('querying data');
       this.$log.debug('$routeParams',$routeParams.resourceId);
 
-      var a: any = HawkularAlertsManager.getTrigger($routeParams.resourceId + '_trigger_tresh');
-      var b: any = HawkularAlertsManager.getTrigger($routeParams.resourceId + '_trigger_avail');
-
-      this.$log.debug('a', a);
-      this.$log.debug('b', b);
-
       this.metricId = $routeParams.resourceId;
 
       this.alertList = [];
 
-      this.HawkularAlert.Alert.query().$promise.then((data) => {
+      this.HawkularAlert.Alert.query({tags:this.metricId}).$promise.then((data) => {
         this.$log.debug('querying data finished');
         this.alertList = data;
       }, (error) => {
@@ -59,5 +53,63 @@ module HawkularMetrics {
   }
 
   _module.controller('MetricsAlertController', MetricsAlertController);
+
+  export class MetricsAlertSetupController {
+    public static  $inject = ['$scope', 'HawkularAlert', 'HawkularAlertsManager', '$log', '$q', '$rootScope', '$routeParams'];
+
+    private metricId: string;
+    private trigger_thres: any;
+    private trigger_thres_damp: any;
+    private trigger_thres_cond: any;
+    private trigger_avail: any;
+    private trigger_avail_damp: any;
+
+    constructor(private $scope:any,
+                private HawkularAlert:any,
+                private HawkularAlertsManager: HawkularMetrics.IHawkularAlertsManager,
+                private $log: ng.ILogService,
+                private $q: ng.IQService,
+                private $rootScope: any,
+                private $routeParams: any) {
+
+      this.$log.debug('querying data');
+      this.$log.debug('$routeParams',$routeParams.resourceId);
+
+      HawkularAlertsManager.getTrigger($routeParams.resourceId + '_trigger_thres').then((data)=> {
+        this.trigger_thres = data;
+        this.$log.debug('this.trigger_thres', this.trigger_thres);
+        return data;
+      }).then(()=> {
+        return HawkularAlert.Dampening.query({triggerId: $routeParams.resourceId + '_trigger_thres'}).$promise;
+      }).then((data)=> {
+        this.trigger_thres_damp = data;
+        this.$log.debug('this.trigger_thres_damp', this.trigger_thres_damp);
+      }).then(()=> {
+        return HawkularAlert.Condition.query({triggerId: $routeParams.resourceId + '_trigger_thres'}).$promise;
+      }).then((data)=> {
+        this.trigger_thres_cond = data;
+        this.$log.debug('this.trigger_thres_cond', this.trigger_thres_cond);
+      });
+
+      HawkularAlertsManager.getTrigger($routeParams.resourceId + '_trigger_avail').then((data)=> {
+        this.trigger_avail = data;
+        this.$log.debug('this.trigger_avail', this.trigger_avail);
+      }).then(()=> {
+        return HawkularAlert.Dampening.query({triggerId: $routeParams.resourceId + '_trigger_thres'}).$promise;
+      }).then((data)=> {
+        this.trigger_avail_damp = data;
+        this.$log.debug('this.trigger_avail_damp', this.trigger_avail_damp);
+      });
+
+      this.metricId = $routeParams.resourceId;
+      this.$log.debug('this.metricId', this.metricId);
+    }
+
+    public save(): void {
+      this.$log.debug('Saving Alert Settings');
+    }
+  }
+
+  _module.controller('MetricsAlertSetupController', MetricsAlertSetupController);
 }
 

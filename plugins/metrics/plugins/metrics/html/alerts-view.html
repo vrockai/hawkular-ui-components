@@ -10,7 +10,12 @@
         {{alert.ctime | date:'medium' }}
       </div>
       <div class="event">
-        <strong>Metrics</strong> met the condition.
+        <strong>Response time</strong> was above the threshold for X minutes (until Y).
+
+        <br>
+
+        {{alert}}
+
       </div>
     </div>
   </div>

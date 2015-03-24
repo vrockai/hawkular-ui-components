@@ -5,7 +5,7 @@
       <div class="form-group">
         <label class="col-md-2 control-label" for="email">Email</label>
         <div class="col-md-6">
-          <input type="text" id="email" class="form-control">
+          <input type="text" id="email" class="form-control"  ng-model="mas.trigger_thres.actions[0]">
           <span class="help-block">Send alerts to this email address.</span>
         </div>
       </div>
@@ -16,8 +16,8 @@
         <label class="col-md-2 control-label" for="email">Status</label>
         <div class="col-md-6">
           <div class="onoffswitch">
-            <input type="checkbox" id="rt" class="onoffswitch-checkbox">
-            <label class="onoffswitch-label" for="rt">
+            <input type="checkbox" id="trigger_thres.enabled" class="onoffswitch-checkbox" ng-model="mas.trigger_thres.enabled">
+            <label class="onoffswitch-label" for="trigger_thres.enabled">
                         <span class="onoffswitch-inner">
                           <span class="onoffswitch-active ng-binding">ON</span>
                           <span class="onoffswitch-inactive ng-binding">OFF</span>
@@ -31,12 +31,12 @@
         <label class="col-md-2 control-label" for="email">Threshold and duration</label>
         <div class="col-md-6 inline-row">
           <div class="input-group time">
-            <input type="text" class="form-control" placeholder="Threshold">
+            <input type="text" class="form-control" placeholder="Threshold" ng-model="mas.trigger_thres_cond[0].threshold">
             <span class="input-group-addon">ms</span>
           </div>
           <span class="between-inputs">for</span>
           <div class="input-group duration">
-            <input type="text" class="form-control" placeholder="Duration">
+            <input type="text" class="form-control" placeholder="Duration" ng-model="mas.trigger_thres_damp[0].evalTimeSetting">
             <select class="selectpicker" style="display: none;">
               <option>miliseconds</option>
               <option>seconds</option>
@@ -54,8 +54,8 @@
         <label class="col-md-2 control-label" for="email">Status</label>
         <div class="col-md-6">
           <div class="onoffswitch">
-            <input type="checkbox" id="rt" name="access" class="onoffswitch-checkbox">
-            <label class="onoffswitch-label" for="rt">
+            <input type="checkbox" id="trigger_avail.enabled" name="trigger_avail.enabled" class="onoffswitch-checkbox" ng-model="mas.trigger_avail.enabled">
+            <label class="onoffswitch-label" for="trigger_avail.enabled">
                         <span class="onoffswitch-inner">
                           <span class="onoffswitch-active ng-binding">ON</span>
                           <span class="onoffswitch-inactive ng-binding">OFF</span>
@@ -69,7 +69,7 @@
         <label class="col-md-2 control-label" for="email">Duration</label>
         <div class="col-md-6 inline-row">
           <div class="input-group duration">
-            <input type="text" class="form-control" placeholder="Duration">
+            <input type="text" class="form-control" placeholder="Duration" ng-model="mas.trigger_avail_damp[0].evalTimeSetting">
             <select class="selectpicker" style="display: none;">
               <option>miliseconds</option>
               <option>seconds</option>
@@ -83,7 +83,7 @@
     </fieldset>
     <div class="form-group">
       <div class="col-md-10 col-md-offset-2">
-        <button type="button" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary" ng-click="mas.save()">Save</button>
         <button type="button" class="btn btn-default">Cancel</button>
       </div>
     </div>
