@@ -27,6 +27,22 @@ module HawkularMetrics {
 
     private metricId: string;
 
+    public responseDuration = 1;
+    public myOriginal = 7000;
+    public myVariable = this.myOriginal / this.responseDuration;
+
+    public timeUnits = [
+      {value: 1, label: 'miliseconds'},
+      {value: 1000, label: 'seconds'},
+      {value: 60000, label: 'minutes'},
+      {value: 360000, label: 'hours'}
+    ];
+
+    public change(original):void {
+      console.log('changin');
+      this[original] = this.myVariable * this.responseDuration;
+    }
+
     constructor(private $scope:any,
                 private HawkularAlert:any,
                 private HawkularAlertsManager: HawkularMetrics.IHawkularAlertsManager,
@@ -64,6 +80,26 @@ module HawkularMetrics {
     private trigger_avail: any;
     private trigger_avail_damp: any;
 
+    public saveProgress: boolean = false;
+    public responseDuration: number;
+    public downtimeDuration: number;
+    public responseUnit: number = 1;
+    public downtimeUnit: number = 1;
+
+    public timeUnits = [
+      {value: 1, label: 'miliseconds'},
+      {value: 1000, label: 'seconds'},
+      {value: 60000, label: 'minutes'},
+      {value: 360000, label: 'hours'}
+    ];
+
+    public timeUnitsDict = {
+      '1': 'miliseconds',
+      '1000': 'seconds',
+      '60000': 'minutes',
+      '360000': 'hours'
+    };
+
     constructor(private $scope:any,
                 private HawkularAlert:any,
                 private HawkularAlertsManager: HawkularMetrics.IHawkularAlertsManager,
@@ -83,6 +119,7 @@ module HawkularMetrics {
         return HawkularAlert.Dampening.query({triggerId: $routeParams.resourceId + '_trigger_thres'}).$promise;
       }).then((data)=> {
         this.trigger_thres_damp = data;
+        this.responseDuration = data[0].evalTimeSetting;
         this.$log.debug('this.trigger_thres_damp', this.trigger_thres_damp);
       }).then(()=> {
         return HawkularAlert.Condition.query({triggerId: $routeParams.resourceId + '_trigger_thres'}).$promise;
@@ -98,6 +135,7 @@ module HawkularMetrics {
         return HawkularAlert.Dampening.query({triggerId: $routeParams.resourceId + '_trigger_avail'}).$promise;
       }).then((data)=> {
         this.trigger_avail_damp = data;
+        this.downtimeDuration = data[0].evalTimeSetting;
         this.$log.debug('this.trigger_avail_damp', this.trigger_avail_damp);
       });
 
@@ -105,9 +143,18 @@ module HawkularMetrics {
       this.$log.debug('this.metricId', this.metricId);
     }
 
+    public changeResponseTimeUnits():void {
+      this.trigger_thres_damp[0].evalTimeSetting = this.responseDuration * this.responseUnit;
+    }
+
+    public changeDowntimeTimeUnits():void {
+      this.trigger_avail_damp[0].evalTimeSetting = this.downtimeDuration * this.downtimeUnit;
+    }
+
     public save(): void {
       this.$log.debug('Saving Alert Settings');
 
+      this.saveProgress = true;
       // Check if email action exists
       this.HawkularAlertsManager.addEmailAction(this.trigger_thres.actions[0]).then(()=> {
         return this.HawkularAlertsManager.updateTrigger(this.trigger_thres.id, this.trigger_thres);
@@ -120,6 +167,8 @@ module HawkularMetrics {
         return this.HawkularAlertsManager.updateDampening(this.trigger_avail.id, this.trigger_avail_damp[0].dampeningId, this.trigger_avail_damp[0]);
       }).then(()=> {
         return this.HawkularAlertsManager.updateCondition(this.trigger_thres.id, this.trigger_thres_cond[0].conditionId, this.trigger_thres_cond[0]);
+      }).finally(()=> {
+        this.saveProgress = false;
       });
     }
   }
