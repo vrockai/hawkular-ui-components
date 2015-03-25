@@ -43,7 +43,7 @@ module HawkularMetrics {
 
       this.alertList = [];
 
-      this.HawkularAlert.Alert.query({tags:this.metricId}).$promise.then((data) => {
+      this.HawkularAlert.Alert.query({tags:this.metricId+'.status.duration'}).$promise.then((data) => {
         this.$log.debug('querying data finished');
         this.alertList = data;
       }, (error) => {
@@ -95,7 +95,7 @@ module HawkularMetrics {
         this.trigger_avail = data;
         this.$log.debug('this.trigger_avail', this.trigger_avail);
       }).then(()=> {
-        return HawkularAlert.Dampening.query({triggerId: $routeParams.resourceId + '_trigger_thres'}).$promise;
+        return HawkularAlert.Dampening.query({triggerId: $routeParams.resourceId + '_trigger_avail'}).$promise;
       }).then((data)=> {
         this.trigger_avail_damp = data;
         this.$log.debug('this.trigger_avail_damp', this.trigger_avail_damp);
@@ -107,6 +107,20 @@ module HawkularMetrics {
 
     public save(): void {
       this.$log.debug('Saving Alert Settings');
+
+      // Check if email action exists
+      this.HawkularAlertsManager.addEmailAction(this.trigger_thres.actions[0]).then(()=> {
+        return this.HawkularAlertsManager.updateTrigger(this.trigger_thres.id, this.trigger_thres);
+      }).then(() => {
+        this.trigger_avail.actions = this.trigger_thres.actions;
+        return this.HawkularAlertsManager.updateTrigger(this.trigger_avail.id, this.trigger_avail);
+      }).then(()=> {
+        return this.HawkularAlertsManager.updateDampening(this.trigger_thres.id, this.trigger_thres_damp[0].dampeningId, this.trigger_thres_damp[0]);
+      }).then(()=> {
+        return this.HawkularAlertsManager.updateDampening(this.trigger_avail.id, this.trigger_avail_damp[0].dampeningId, this.trigger_avail_damp[0]);
+      }).then(()=> {
+        return this.HawkularAlertsManager.updateCondition(this.trigger_thres.id, this.trigger_thres_cond[0].conditionId, this.trigger_thres_cond[0]);
+      });
     }
   }
 

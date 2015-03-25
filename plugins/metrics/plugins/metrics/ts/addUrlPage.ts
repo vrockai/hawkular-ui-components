@@ -23,7 +23,7 @@ module HawkularMetrics {
     public static $inject = ['$location', '$scope', '$rootScope', '$log', '$filter', 'HawkularInventory', 'HawkularMetric', 'HawkularAlert', 'DataResource', 'HawkularAlertsManager'];
 
     private httpUriPart = 'http://';
-
+    public addProgress: boolean = false;
     private resourceList;
 
     constructor(private $location:ng.ILocationService,
@@ -43,6 +43,8 @@ module HawkularMetrics {
     }
 
     addUrl(url:string):void {
+      this.addProgress = true;
+
       var resource = {
         type: 'URL',
         id: '',
@@ -77,27 +79,16 @@ module HawkularMetrics {
 
 
           /// For right now we will just Register a couple of metrics automatically
-          this.HawkularInventory.Metric.save({
+          return this.HawkularInventory.Metric.save({
             tenantId: globalTenantId,
             resourceId: newResource.id
           }, metrics).$promise.then((newMetrics) => {
               // TODO: Add availability...
-              toastr.info('Your data is being collected. Please be patient (should be about another minute).');
-              this.$location.url('/metrics/responseTime/' + newResource.id);
             });
 
         }).then(()=> {
           // Find if a default email exists
-          return this.HawkularAlertsManager.getAction('myemail@company.com');
-        }).then((data)=> {
-          // Create a default email action
-          this.$log.debug('Default action', data);
-          if (!data) {
-            this.$log.debug('Default action does not exist, creating one');
-            return this.HawkularAlertsManager.createAction('myemail@company.com');
-          } else {
-            this.$log.debug('Default does already exist');
-          }
+          return this.HawkularAlertsManager.addEmailAction('myemail@company.com');
         }).then(()=> {
           // Create threshold trigger for newly created metrics
           console.log('metric', globalMetricId);
@@ -106,6 +97,10 @@ module HawkularMetrics {
           console.log('alert', alert);
           // Create availability trigger for newly created metrics
           return this.HawkularAlertsManager.createTrigger(globalMetricId + '_trigger_avail', false, 'AVAILABILITY', 'myemail@company.com');
+        }).finally(()=> {
+          this.addProgress = false;
+          toastr.info('Your data is being collected. Please be patient (should be about another minute).');
+          this.$location.url('/metrics/responseTime/' + globalMetricId);
         });
     }
 

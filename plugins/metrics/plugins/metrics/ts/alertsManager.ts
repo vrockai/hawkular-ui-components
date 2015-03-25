@@ -18,10 +18,14 @@
 module HawkularMetrics {
 
   export interface IHawkularAlertsManager {
+    addEmailAction(email: string): ng.IPromise<void>
     createAction(email: string): ng.IPromise<void>
+    updateTrigger(triggerId: string, data: any): ng.IPromise<void>
     createTrigger(triggerName: string, enabled: boolean, conditionType: string, email: string): ng.IPromise<void>
     createCondition(triggerId: string, condition: any): ng.IPromise<void>
+    updateCondition(triggerId: string, conditionId: string, condition: any): ng.IPromise<void>
     createDampening(triggerId: string, duration: number): ng.IPromise<void>
+    updateDampening(triggerId: string, dampeningId: string, dampening: any): ng.IPromise<void>
     getAction(email: string): ng.IPromise<void>
     getActions(triggerId: string): ng.IPromise<void>
     getTrigger(triggerId: string): ng.IPromise<void>
@@ -32,9 +36,11 @@ module HawkularMetrics {
 
   export class HawkularAlertsManager implements IHawkularAlertsManager{
 
-    public static $inject = ['HawkularAlert'];
+    public static $inject = ['HawkularAlert', '$q', '$log'];
 
-    constructor(private HawkularAlert:any) {
+    constructor(private HawkularAlert: any,
+                private $q: ng.IQService,
+                private $log: ng.ILogService) {
     }
 
     public createTrigger(triggerName: string, enabled: boolean, conditionType: string, email: string): ng.IPromise<void> {
@@ -76,14 +82,15 @@ module HawkularMetrics {
               operator: 'DOWN'
             });
           }
-        }).then((condition) => {
-          console.log('c triggerId', condition[0]);
-
+        }).then(() => {
           // Create dampening for that trigger
-          if (conditionType === 'THRESHOLD') {
-            return this.createDampening(triggerId, 7000);
-          }
+          return this.createDampening(triggerId, 7000);
         });
+    }
+
+    public updateTrigger(triggerId: string, data: any): ng.IPromise<void> {
+      data.id = triggerId;
+      return this.HawkularAlert.Trigger.put({triggerId: triggerId}, data).$promise;
     }
 
     getAction(email: string): ng.IPromise<void> {
@@ -101,15 +108,49 @@ module HawkularMetrics {
       }).$promise;
     }
 
+    addEmailAction(email: string): ng.IPromise<void> {
+      return this.getAction(email).then((data: any)=> {
+        // Create a default email action
+        this.$log.debug('Action', data, ' for email ', email);
+        if (!data.actionId) {
+          this.$log.debug('Action does not exist, creating one');
+          return this.createAction(email);
+        }
+
+        this.$log.debug('Action does already exist');
+      });
+    }
+
+    updateAction(email: string): ng.IPromise<void> {
+      return this.HawkularAlert.Action.put({
+        actionPlugin: 'email',
+        actionId: email,
+        description: 'Created on ' + Date(),
+        to: email
+      }).$promise;
+    }
+
     createCondition(triggerId: string, condition: any): ng.IPromise<void> {
       return this.HawkularAlert.Condition.save({triggerId: triggerId}, condition).$promise;
+    }
+
+    updateCondition(triggerId: string, conditionId: string, condition: any): ng.IPromise<void> {
+      return this.HawkularAlert.Condition.put({triggerId: triggerId, conditionId: conditionId}, condition).$promise;
     }
 
     createDampening(triggerId: string, duration: number): ng.IPromise<void> {
       return this.HawkularAlert.Dampening.save({ triggerId: triggerId }, {
         triggerId: triggerId,
-        evalTimeSetting: duration
+        evalTimeSetting: duration,
+        type: 'STRICT_TIME'
       }).$promise;
+    }
+
+    updateDampening(triggerId: string, dampeningId: string, dampening: any): ng.IPromise<void> {
+      console.log('triggerId', triggerId);
+      console.log('dampeningId', dampeningId);
+      dampening.dampeningId = dampeningId;
+      return this.HawkularAlert.Dampening.put({ triggerId: triggerId, dampeningId: dampeningId }, dampening).$promise;
     }
 
     getActions(triggerId:string): ng.IPromise<void> {
@@ -140,25 +181,6 @@ module HawkularMetrics {
         }
 
       });
-    }
-
-    private updateCondition(triggerId:string, conditionId: string, treshold:number):ng.IPromise<void> {
-      return this.HawkularAlert.Condition.put({
-          triggerId: triggerId,
-          conditionId: conditionId
-        }, {
-        treshold: treshold
-      }).$promise;
-    }
-
-    private updateDampening(triggerId: string, dampeningId: string, duration:number):ng.IPromise<void> {
-      return this.HawkularAlert.Dampening.put({
-          triggerId: triggerId,
-          dampeningId: dampeningId
-        }, {
-          duration: duration
-        }
-      ).$promise;
     }
 
     setResponseTime(triggerId:string, treshold:number, duration:number, enabled:boolean):ng.IPromise<void> {
