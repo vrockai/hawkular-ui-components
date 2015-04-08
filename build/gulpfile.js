@@ -28,6 +28,10 @@ module.exports = function(gulp, config, pluginName){
     tslint = require('gulp-tslint'),
     tslintRules = require('../tslint.json');
 
+  // For error reporting
+  var nota = require('../node_modules/gulp-notify/node_modules/node-notifier');
+  var gutil = require('../node_modules/gulp-typescript/node_modules/gulp-util');
+
   var plugins = gulpLoadPlugins({});
   var isWatch = false;
 
@@ -47,9 +51,35 @@ module.exports = function(gulp, config, pluginName){
     del(['.tmp/' + pluginName + 'defs.d.ts']);
   });
 
-  //gulp.task('tsc-' + pluginName, ['clean-defs'], function() {
+  function myReporter(fullFilename) {
+    if (fullFilename === void 0) { fullFilename = false; }
+    return {
+      error: function (error) {
+        nota.notify({title:'TypeScript Error', message: '[ gulp-typescript ] ' + error.diagnostic.code + ' ' + error.diagnostic.messageText},
+        function(){
+          console.error('[' + gutil.colors.gray('gulp-typescript') + '] ' + gutil.colors.bgRed(error.diagnostic.code + '') + ' ' + gutil.colors.red(error.diagnostic.messageText));
+          if (error.tsFile) {
+            console.error('> ' + gutil.colors.gray('file: ') + (fullFilename ? error.fullFilename : error.relativeFilename) + gutil.colors.gray(':'));
+            var lines = error.tsFile.text.split(/(\r\n|\r|\n)/);
+            var logLine = function (lineIndex, errorStart, errorEnd) {
+              var line = lines[lineIndex - 1];
+              if (errorEnd === undefined)
+                errorEnd = line.length;
+              console.error('> ' + gutil.colors.gray('[' + lineIndex + '] ') + line.substring(0, errorStart - 1) + gutil.colors.red(line.substring(errorStart - 1, errorEnd)) + line.substring(errorEnd));
+            };
+            for (var i = error.startPosition.line; i <= error.endPosition.line; i++) {
+              logLine(i, i === error.startPosition.line ? error.startPosition.character : 0, i === error.endPosition.line ? error.endPosition.character : undefined);
+            }
+          }
+          if(!isWatch) {
+            process.exit(1);
+          }
+        });
+      }
+    };
+  }
+
   gulp.task('tsc-' + pluginName, function() {
-    var wasError = false;
     var cwd = process.cwd();
     var tsResult = gulp.src(config.ts(pluginName))
       .pipe(plugins.sourcemaps.init())
@@ -60,24 +90,10 @@ module.exports = function(gulp, config, pluginName){
         noExternalResolve: false,
         removeComments: true,
         noEmitOnError: false
-      }), {}, plugins.typescript.reporter.fullReporter(true)))
-      .on('error', function(){
-        wasError = true;
-      })
-      .on('end', function(){
-        if(wasError && !isWatch) {
-          throw 'Error in one or more TypeScript files. The build is stopped.'
-        }
-      });
+      }), {}, myReporter(true)));
 
     return eventStream.merge(
       tsResult.js
-        .pipe(plugins.plumber({
-          handleError: function (err) {
-            console.log(err);
-            this.emit('end');
-          }
-        }))
         .pipe(plugins.concat('compiled.js'))
         .pipe(plugins.sourcemaps.write())
         .pipe(gulp.dest('.tmp/' + pluginName + '/')),
