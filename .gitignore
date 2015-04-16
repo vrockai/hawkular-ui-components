@@ -1,3 +1,8 @@
+# Dist files
+# Don't forget to force add those during the release process
+
+dist/
+
 # Logs
 logs/
 *.log
